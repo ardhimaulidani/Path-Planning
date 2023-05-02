@@ -30,9 +30,9 @@ class Node():
     
     def heuristic(self, pose):
         # # Diagonal Distance
-        dx = abs((self.position[0] - pose.position[0]))
-        dy = abs((self.position[1] - pose.position[1]))
-        return 0.05 * (dx + dy) + (((0.05**2+0.05**2)**0.5) - 2 * 0.05) * min(dx, dy)
+        # dx = abs((self.position[0] - pose.position[0]))
+        # dy = abs((self.position[1] - pose.position[1]))
+        # return 0.05 * (dx + dy) + (((0.05**2+0.05**2)**0.5) - 2 * 0.05) * min(dx, dy)
 
         # # Manhattan Distance
         # dx = abs((self.position[0] - pose.position[0]))
@@ -40,7 +40,7 @@ class Node():
         # return 0.05 * (dx + dy)
 
         # # Euclidean Distance
-        # return ((self.position[0] - pose.position[0])**2 + (self.position[1] - pose.position[1])**2)**0.5    
+        return ((self.position[0] - pose.position[0])**2 + (self.position[1] - pose.position[1])**2)**0.5    
     
     def is_same_as(self, pose):
         return self.dist_to(pose) <= 0.01
@@ -52,6 +52,7 @@ class AStar():
     @staticmethod
     def replan(map, start, goal, robot):
         # Declare node neighbours
+        print("KONTOL")
         neighbors = [(0, 0.05), (0, -0.05), (0.05, 0), (-0.05, 0),
                     (0.05, 0.05), (-0.05, -0.05), (0.05, -0.05), (-0.05, 0.05)]
         # neighbors = [(0, -0.05), (0, 0.05), (-0.05, 0), (0.05, 0)]
@@ -73,9 +74,9 @@ class AStar():
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
-            print(current_node.position[0], current_node.position[1])
+            # print(current_node.position[0], current_node.position[1])
             closed_list.append(current_node)
-
+            print("a")
             new_node = []
             for new_position in neighbors: # Adjacent squares
                 # Get node position
@@ -90,7 +91,6 @@ class AStar():
                 #     continue
 
                 if not map.is_allowed(node_position[0], node_position[1], robot):
-                    # print("not allowed")
                     continue
 
                 # Create new node with current node as parent
@@ -104,6 +104,9 @@ class AStar():
 
                 # Check if another successor is on the closed list
                 # for other_successor in closed_list:
+                if any (other_successor.is_same_as(successor) and other_successor.f > successor.f for other_successor in closed_list): #CHECK AGAIN FOR FLOAT NUMBER
+                    print("same as closed")
+                    continue
                 #     if other_successor.is_same_as(successor) and other_successor.f > successor.f: #CHECK AGAIN FOR FLOAT NUMBER
                 #         # print("same as closed")
                 #         continue
@@ -116,13 +119,13 @@ class AStar():
                 # Check if another successor is already in the open list
                 if any(other_successor.is_same_as(successor) and other_successor_f > successor.f for other_successor_f, other_successor in open_list): #CHECK AGAIN FOR FLOAT NUMBER
                     # print("same as opened")
-                    # continue
-                    if any (other_successor.is_same_as(successor) and other_successor.f > successor.f for other_successor in closed_list): #CHECK AGAIN FOR FLOAT NUMBER
-                        # print("same as closed")
-                        continue
+                    continue
+
+
                             
                 # Add the child to the open list
                 heapq.heappush(open_list, (successor.f, successor))
+                print("EXECUTED")
         
         # Found the goal
         if path_found is None:
@@ -131,11 +134,11 @@ class AStar():
             # Restore and publish path
             path = []
             current = path_found
-            print("Restoring path from final state...")
+            # print("Restoring path from final state...")
             while current is not None:
                 path.append(current.position)
                 current = current.parent
-            print("Planning was finished...") 
+            # print("Planning was finished...") 
             return path[::-1] # Return reversed path
 
 if __name__ == '__main__':
@@ -156,4 +159,4 @@ if __name__ == '__main__':
     end = (7, 6)
 
     path = AStar.replan(maze, start, end, Robot(1,1))
-    print(path)
+    # print(path)

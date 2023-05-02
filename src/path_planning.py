@@ -38,7 +38,7 @@ class PathPlanning:
             self.is_working = True
             if self.map is not None and self.map.is_allowed(goal_pose.pose.position.x, goal_pose.pose.position.y, self.robot):
                 self.goal_pose = (goal_pose.pose.position.x, goal_pose.pose.position.y)
-                rospy.loginfo("New goal coordinate was set")
+                rospy.loginfo("New goal coordinate was set: {}".format(self.goal_pose))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
@@ -50,7 +50,7 @@ class PathPlanning:
             self.is_working = True
             if self.map is not None and self.map.is_allowed(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y, self.robot):
                 self.start_pose = (start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
-                rospy.loginfo("New start coordinate was set")
+                rospy.loginfo("New start coordinate was set: {}".format(self.start_pose))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
@@ -58,8 +58,6 @@ class PathPlanning:
             self.is_working = False
 
     def plan_process(self):
-        rospy.loginfo("Path planning was started...")
-        self.path = AStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
         path_msg.header.frame_id = self.map.frame_id
