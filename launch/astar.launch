@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find asr_its)/maps/rtabmap.yaml"/>
-    <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find asr_its)/rviz/planner.rviz"/> 
-    <node name="astar_node" pkg="path_planning" type="path_planning.py" output="screen"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/rtabmap.yaml"/>
+    <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/rviz/planner.rviz"/> 
+    <node name="astar_node" pkg="path_planner" type="path_planner.py" output="screen"/>
 </launch>

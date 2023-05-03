@@ -64,9 +64,10 @@ class PathPlanning:
 
         rospy.loginfo("Path planning was started...")
         path = AStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
+        smooth_path = AStar.smooth_path(path)
 
         if path is not None:
-            for p in path:
+            for p in smooth_path:
                 pose_msg = PoseStamped()
                 pose_msg.header.frame_id = path_msg.header.frame_id
                 pose_msg.header.stamp = rospy.Time.now()
