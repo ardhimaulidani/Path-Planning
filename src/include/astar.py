@@ -27,23 +27,9 @@ class Node():
     def dist_to(self, pose):
         # Euclidean Distance
         return (abs(self.position[0] - pose.position[0])**2 + abs(self.position[1] - pose.position[1])**2)**0.5
-    
-    def heuristic(self, pose):
-        # # Diagonal Distance
-        # dx = abs((self.position[0] - pose.position[0]))
-        # dy = abs((self.position[1] - pose.position[1]))
-        # return 0.05 * (dx + dy) + (((0.05**2+0.05**2)**0.5) - 2 * 0.05) * min(dx, dy)
-
-        # # Manhattan Distance
-        # dx = abs((self.position[0] - pose.position[0]))
-        # dy = abs((self.position[1] - pose.position[1]))
-        # return 0.05 * (dx + dy)
-
-        # # Euclidean Distance
-        return ((self.position[0] - pose.position[0])**2 + (self.position[1] - pose.position[1])**2)**0.5    
-    
+ 
     def is_same_as(self, pose):
-        return self.dist_to(pose) <= 0.05
+        return self.dist_to(pose) <= 0.1
 
 class AStar():
     def __init__(self) -> None:
@@ -52,9 +38,14 @@ class AStar():
     @staticmethod
     def replan(map, start, goal, robot):
         # Declare node neighbours
-        neighbors = [(0, 0.1), (0, -0.1), (0.1, 0), (-0.1, 0),
-                    (0.1, 0.1), (-0.1, -0.1), (0.1, -0.1), (-0.1, 0.1)]
-        # neighbors = [(0, -0.05), (0, 0.05), (-0.05, 0), (0.05, 0)]
+        neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0),
+                    (1, 1), (-1, -1), (1, -1), (-1, 1)]
+        # neighbors = [(0, 0.05), (0, -0.05), (0.05, 0), (-0.05, 0),
+        #             (0.05, 0.05), (-0.05, -0.05), (0.05, -0.05), (-0.05, 0.05)]
+        # neighbors = [(0, 0.1), (0, -0.1), (0.1, 0), (-0.1, 0),
+                    # (0.1, 0.1), (-0.1, -0.1), (0.1, -0.1), (-0.1, 0.1),
+                    # (0.05, 0.1), (0.05, -0.1), (0.1, 0.05), (-0.1, 0.05),
+                    # (-0.05, -0.1), (-0.05, 0.1), (-0.1, -0.05), (0.1, -0.05)]
         # Create start node
         start_node = Node(start, None)
         start_node.g = start_node.h = start_node.f = 0
@@ -73,7 +64,7 @@ class AStar():
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
-            print(current_node.position[0], current_node.position[1])
+            # print(current_node.position[0], current_node.position[1])
 
             for new_position in neighbors: # Adjacent squares
                 # Get node position
@@ -88,22 +79,20 @@ class AStar():
                     successor = Node(node_position, current_node)
                     
                     # Check if successor is same as goal pose
-                    if successor.dist_to(goal_node) <= min(robot.width/2, robot.height/2):
+                    if successor.dist_to(goal_node) <= min(robot.width/map.resolution, robot.height/map.resolution):
                         path_found = successor
                         break
 
                     # Create the f, g, and h values
                     successor.g = current_node.g + successor.dist_to(current_node)
-                    successor.h = successor.heuristic(goal_node)
+                    successor.h = successor.dist_to(goal_node)
                     successor.f = successor.g + successor.h
 
                     # Check if another successor is already in the open list
-                    if any(other_successor.is_same_as(successor) and other_successor.f <= successor.f for other_successor_f, other_successor in open_list): #CHECK AGAIN FOR FLOAT NUMBER
-                        # print("BBBBBBBBBBBBBBBBBBB")
+                    if any(other_successor.is_same_as(successor) and other_successor.g <= successor.g for other_successor_f, other_successor in open_list):
                         continue
                 # for other_successor in closed_list:
-                    if any(other_successor.is_same_as(successor) and other_successor.f <= successor.f for other_successor in closed_list): #CHECK AGAIN FOR FLOAT NUMBER
-                        # print("AAAAAAAAAAAAAAAAAAA")
+                    if any(other_successor.is_same_as(successor) and other_successor.g <= successor.g for other_successor in closed_list):
                         continue
                     # Add the child to the open list
                     heapq.heappush(open_list, (successor.f, successor))
@@ -119,7 +108,7 @@ class AStar():
             current = path_found
             # print("Restoring path from final state...")
             while current is not None:
-                path.append(current.position)
+                path.append(map.cell_to_m_coordinate(current.position[0], current.position[1]))
                 current = current.parent
             # print("Planning was finished...") 
             return path[::-1] # Return reversed path
@@ -135,6 +124,7 @@ class AStar():
             # Calculate the control points for the Bezier curve
             cp1 = ((p0[0] + p1[0])/2, (p0[1] + p1[1])/2)
             cp2 = ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
+           
             # Calculate the points on the Bezier curve
             for t in range(1, 10):
                 x = (1-t/10)**2*p0[0] + 2*(1-t/10)*t/10*cp1[0] + (t/10)**2*p1[0]

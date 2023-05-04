@@ -36,24 +36,27 @@ class PathPlanning:
     def goal_callback(self, goal_pose):
         if not self.is_working:
             self.is_working = True
-            if self.map is not None and self.map.is_allowed(goal_pose.pose.position.x, goal_pose.pose.position.y, self.robot):
-                self.goal_pose = (goal_pose.pose.position.x, goal_pose.pose.position.y)
-                rospy.loginfo("New goal coordinate was set: {}".format(self.goal_pose))
+            self.goal_pose = self.map.m_to_cell_coordinate(goal_pose.pose.position.x, goal_pose.pose.position.y)
+            if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot):
+                rospy.loginfo("New goal coordinate was set: {}, {}".format(goal_pose.pose.position.x, goal_pose.pose.position.y))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
+                self.goal_pose = None
                 rospy.logwarn("New goal is bad or no map is available")
             self.is_working = False
 
     def start_callback(self, start_pose):
         if not self.is_working:
             self.is_working = True
-            if self.map is not None and self.map.is_allowed(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y, self.robot):
-                self.start_pose = (start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
-                rospy.loginfo("New start coordinate was set: {}".format(self.start_pose))
+            self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
+            if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
+                # self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
+                rospy.loginfo("New start coordinate was set: {}, {}".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
+                self.start_pose = None
                 rospy.logwarn("New start is bad or no map is available")
             self.is_working = False
 
@@ -65,7 +68,7 @@ class PathPlanning:
         rospy.loginfo("Path planning was started...")
         path = AStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
         smooth_path = AStar.smooth_path(path)
-
+        # print(path)
         if path is not None:
             for p in smooth_path:
                 pose_msg = PoseStamped()
