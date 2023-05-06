@@ -3,7 +3,9 @@
 # A* Alghorithm for ROS Noetic Path Planning
 # By Ardhika Maulidani
 
+import math
 import heapq
+import time
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -24,14 +26,22 @@ class Node():
     def __le__(self, other):
         return self.f <= other.f
     
+    def __hash__(self):
+        return hash(self.position)
+    
     def dist_to(self, pose):
         # Euclidean Distance
         return (abs(self.position[0] - pose.position[0])**2 + abs(self.position[1] - pose.position[1])**2)**0.5
+    
+    def heuristic(self, pose):
+        y_dist = abs(self.position[1] - pose.position[1])
+        x_dist = abs(self.position[0] - pose.position[0])
+        return max(y_dist, x_dist)
  
     def is_same_as(self, pose):
         return self.dist_to(pose) <= 0.1
 
-class AStar():
+class HybridAStar():
     def __init__(self) -> None:
         pass         
 
@@ -40,7 +50,6 @@ class AStar():
         # Declare node neighbours
         neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0),
                     (1, 1), (-1, -1), (1, -1), (-1, 1)]
-        
         # Create start node
         start_node = Node(start, None)
         start_node.g = start_node.h = start_node.f = 0
@@ -50,15 +59,17 @@ class AStar():
 
         # Initialize both open and closed list
         open_list = []
-        closed_list = []
+        closed_list = set()
         path_found = None
-
+        start_time = time.time()
         # Add start node to open list
         heapq.heappush(open_list, (0.0, start_node))
 
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
+            # print(current_node.g, current_node.h)
+            # print(current_node.position[0], current_node.position[1])
 
             for new_position in neighbors: # Adjacent squares
                 # Get node position
@@ -67,32 +78,41 @@ class AStar():
                 # Check if map is walkable terrain
                 if not map.is_allowed(node_position[0], node_position[1], robot):
                     node_position = None
-                
+
+        
                 # Create new node with current node as parent
                 if node_position is not None:
                     successor = Node(node_position, current_node)
                     
                     # Check if successor is same as goal pose
-                    if successor.dist_to(goal_node) <= min(robot.width/map.resolution, robot.height/map.resolution):
+                    if successor.dist_to(goal_node) <= min(robot.width/(2*map.resolution), robot.height/(2*map.resolution)):
                         path_found = successor
                         break
-
+                    
+                    # for other_successor in closed_list:
+                    # check_close_list = any(True for other_successor in closed_list if (other_successor == successor))
+                    check_close_list = successor in closed_list
+                    if check_close_list:
+                        continue       
+                    
                     # Create the f, g, and h values
-                    successor.g = current_node.g + successor.dist_to(current_node)
-                    successor.h = successor.dist_to(goal_node)
-                    successor.f = 0.2*successor.g + successor.h
+                    successor.g = current_node.g + current_node.dist_to(successor)
+                    successor.h = successor.heuristic(goal_node)
+                    successor.f = successor.g + successor.h
 
                     # Check if another successor is already in the open list
-                    if any(other_successor.is_same_as(successor) and other_successor.g <= successor.g for other_successor_f, other_successor in open_list):
+                    check_open_list = any(True for other_successor_f, other_successor in open_list if (other_successor == successor and other_successor.g <= successor.g))
+                    if check_open_list:
                         continue
-                # for other_successor in closed_list:
-                    if any(other_successor.is_same_as(successor) and other_successor.g <= successor.g for other_successor in closed_list):
-                        continue
+
                     # Add the child to the open list
                     heapq.heappush(open_list, (successor.f, successor))
 
-            closed_list.append(current_node)
+            closed_list.add(current_node)
         
+        end_time = time.time()
+        print("--- %s seconds ---" % (end_time - start_time))
+
         # Found the goal
         if path_found is None:
             print("No path found")
@@ -104,6 +124,35 @@ class AStar():
                 path.append(map.cell_to_m_coordinate(current.position[0], current.position[1]))
                 current = current.parent
             return path[::-1] # Return reversed path
+
+    def angle_between_points(p1, p2, p3):
+        v1 = (p2[0] - p1[0], p2[1] - p1[1])
+        v2 = (p3[0] - p2[0], p3[1] - p2[1])
+        dot_product = v1[0] * v2[0] + v1[1] * v2[1]
+        cross_product = v1[0] * v2[1] - v1[1] * v2[0]
+        return math.atan2(cross_product, dot_product)
+    
+    @staticmethod
+    def path_dist(p1, p2):
+        # Euclidean Distance
+        return math.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+      
+    @staticmethod
+    def smooth_path(path):
+        smoothed_path = [path[0]]
+        for i in range(1, len(path) - 1):
+            p1 = path[i-1]
+            p2 = path[i]
+            p3 = path[i+1]
+            angle = HybridAStar.angle_between_points(p1, p2, p3)
+            rounded_angle = round(math.degrees(angle) / 7.5) * 7.5
+            for j in range(1, 4):
+                new_angle = math.radians(rounded_angle + j * 7.5)
+                distance = HybridAStar.path_dist(p2, p3)
+                new_point = (p2[0] + distance * math.cos(new_angle), p2[1] + distance * math.sin(new_angle))
+                smoothed_path.append(new_point)
+        smoothed_path.append(path[-1])
+        return smoothed_path
     
 if __name__ == '__main__':
     from robot import Robot
