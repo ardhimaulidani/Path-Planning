@@ -5,7 +5,7 @@ from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from include.map import Map
-from include.robot import Robot
+from include.robot_dimension import RobotDimension
 from include.astar import AStar
 
 class PathPlanning:
@@ -13,7 +13,7 @@ class PathPlanning:
         self.map = None
         self.start_pose = None
         self.goal_pose = None
-        self.robot = Robot(0.5, 0.5)
+        self.robot = RobotDimension()
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
 

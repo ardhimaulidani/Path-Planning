@@ -73,7 +73,6 @@ class AStar():
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
-            print(current_node.position[0], current_node.position[1])
 
             for new_position in neighbors: # Adjacent squares
                 # Get node position
@@ -144,7 +143,7 @@ class AStar():
         return smoothed_path
     
 if __name__ == '__main__':
-    from robot import Robot
+    from include.robot_dimension import Robot
 
     maze = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
