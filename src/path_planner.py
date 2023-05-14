@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 import rospy
+import cProfile
+
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-import cProfile
+
 from include.map import Map
-from include.robot import Robot
-# from include.astar import AStar
+from include.robot_dimension import RobotDimension
+from include.astar import AStar
 from include.HybridAStar import HybridAStar
+
 
 class PathPlanning:
     def __init__(self):
         self.map = None
         self.start_pose = None
         self.goal_pose = None
-        self.robot = Robot(0.6, 0.6)
+        
+        self.robot = RobotDimension()
+
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
 

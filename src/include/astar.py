@@ -106,7 +106,7 @@ class AStar():
             return path[::-1] # Return reversed path
     
 if __name__ == '__main__':
-    from robot import Robot
+    from include.robot_dimension import Robot
 
     maze = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
