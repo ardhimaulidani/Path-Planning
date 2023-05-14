@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
-
 import rospy
+import cProfile
+
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from include.map import Map
 from include.robot_dimension import RobotDimension
 from include.astar import AStar
+from include.HybridAStar import HybridAStar
+
 
 class PathPlanning:
     def __init__(self):
         self.map = None
         self.start_pose = None
         self.goal_pose = None
+        
         self.robot = RobotDimension()
+
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
 
@@ -29,31 +34,40 @@ class PathPlanning:
             self.is_working = True
             self.map = Map(grid_map)
             rospy.loginfo("New map was set")
+
+            # Uncomment for impoving code execution time only!!!!
+            # self.start_pose = self.map.m_to_cell_coordinate(2.0221657752990723, 1.984541416168213)
+            # self.goal_pose = self.map.m_to_cell_coordinate(-0.9461665153503418, -0.04367697238922119)
+          
             if self.ready_to_plan():
+                # cProfile.runctx('self.plan_process()', globals(), locals())  
                 self.plan_process()
+                
             self.is_working = False
 
     def goal_callback(self, goal_pose):
         if not self.is_working:
             self.is_working = True
-            if self.map is not None and self.map.is_allowed(goal_pose.pose.position.x, goal_pose.pose.position.y, self.robot):
-                self.goal_pose = (goal_pose.pose.position.x, goal_pose.pose.position.y)
-                rospy.loginfo("New goal coordinate was set: {}".format(self.goal_pose))
+            self.goal_pose = self.map.m_to_cell_coordinate(goal_pose.pose.position.x, goal_pose.pose.position.y)
+            if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot):
+                rospy.loginfo("New goal pose was set: ({}, {})".format(goal_pose.pose.position.x, goal_pose.pose.position.y))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
+                self.goal_pose = None
                 rospy.logwarn("New goal is bad or no map is available")
             self.is_working = False
 
     def start_callback(self, start_pose):
         if not self.is_working:
             self.is_working = True
-            if self.map is not None and self.map.is_allowed(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y, self.robot):
-                self.start_pose = (start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
-                rospy.loginfo("New start coordinate was set: {}".format(self.start_pose))
+            self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
+            if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
+                rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
                 if self.ready_to_plan():
                     self.plan_process()
             else:
+                self.start_pose = None
                 rospy.logwarn("New start is bad or no map is available")
             self.is_working = False
 
@@ -63,11 +77,11 @@ class PathPlanning:
         path_msg.header.frame_id = self.map.frame_id
 
         rospy.loginfo("Path planning was started...")
-        path = AStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
-        smooth_path = AStar.smooth_path(path)
-
+        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
+        # smooth_path = HybridAStar.smooth_path(path)
+        # print(path)
         if path is not None:
-            for p in smooth_path:
+            for p in path:
                 pose_msg = PoseStamped()
                 pose_msg.header.frame_id = path_msg.header.frame_id
                 pose_msg.header.stamp = rospy.Time.now()

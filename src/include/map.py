@@ -40,11 +40,17 @@ class Map:
         j = int((x - self.origin.x) / self.resolution)
         return (i, j)
 
+    # Convert meter to cells coordinate relative to origin
+    def cell_to_m_coordinate(self, i, j):
+        y = float(i * self.resolution + self.origin.y)
+        x = float(j * self.resolution + self.origin.x)
+        return (x, y)
+    
     # Check meter coordinate including robot size is inside map boundaries
-    def is_allowed(self, x, y, robot):
+    def is_allowed(self, i, j, robot):
         was_error = False
-        i, j = self.m_to_cell_coordinate(x, y)
-        side = int(math.floor((max(robot.width, robot.height) / self.resolution) / 2))
+        # i, j = self.m_to_cell_coordinate(x, y)
+        side = int(math.floor((max(robot.width, robot.height) / self.resolution)/2))
         try:
             for s_i in range(i-side, i+side):
                 for s_j in range(j-side, j+side):
