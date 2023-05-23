@@ -2,46 +2,59 @@
 import rospy
 import cProfile
 
+from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 
 from include.map import Map
 from include.robot_dimension import RobotDimension
-from include.astar import AStar
 from include.HybridAStar import HybridAStar
-
 
 class PathPlanning:
     def __init__(self):
         self.map = None
         self.start_pose = None
         self.goal_pose = None
-        
-        self.robot = RobotDimension()
+        self.prev_crash_status = False
+
+        self.robot = RobotDimension(0.7, 0.7)
 
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
 
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
-        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.start_callback)
+        rospy.Subscriber("/crashed", Bool, self.crashed_callback)
+        rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
     def ready_to_plan(self):
         return self.map is not None and self.start_pose is not None and self.goal_pose is not None
+
+    def crashed_callback(self, crashed_status):
+        if not self.is_working:
+            self.is_working = True        
+            self.crashed_status = crashed_status.data
+            if self.prev_crash_status == 0 and self.crashed_status == 1:
+                if self.ready_to_plan():
+                    rospy.loginfo("Updating plan...")    
+                    self.plan_process()
+            self.prev_crash_status = self.crashed_status
+            self.is_working = False
+
 
     def map_callback(self, grid_map):
         if not self.is_working:
             self.is_working = True
             self.map = Map(grid_map)
-            rospy.loginfo("New map was set")
+            rospy.loginfo("New map was updated")
 
             # Uncomment for impoving code execution time only!!!!
             # self.start_pose = self.map.m_to_cell_coordinate(2.0221657752990723, 1.984541416168213)
             # self.goal_pose = self.map.m_to_cell_coordinate(-0.9461665153503418, -0.04367697238922119)
-          
-            if self.ready_to_plan():
-                # cProfile.runctx('self.plan_process()', globals(), locals())  
-                self.plan_process()
+        
+            # if self.ready_to_plan(): 
+            #     self.plan_process()
+                # cProfile.runctx('self.plan_process()', globals(), locals()) 
                 
             self.is_working = False
 
@@ -64,8 +77,8 @@ class PathPlanning:
             self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
             if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
                 rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
-                if self.ready_to_plan():
-                    self.plan_process()
+            #     if self.ready_to_plan():
+            #         self.plan_process()
             else:
                 self.start_pose = None
                 rospy.logwarn("New start is bad or no map is available")
