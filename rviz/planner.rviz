@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Goal Pose1
+        - /Initial Pose1
       Splitter Ratio: 0.5
     Tree Height: 716
   - Class: rviz/Selection
@@ -130,7 +131,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /initialpose
+      Topic: /amcl_pose
       Unreliable: false
       Value: true
     - Class: rviz/MarkerArray
