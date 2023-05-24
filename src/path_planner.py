@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import tf
 import rospy
 import cProfile
+import math
 
 from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid, Path
@@ -84,6 +86,21 @@ class PathPlanning:
                 rospy.logwarn("New start is bad or no map is available")
             self.is_working = False
 
+    def angle(self, current_pose, next_pose):
+        dy = next_pose[1] - current_pose[1]
+        dx = next_pose[0] - current_pose[0]
+        return math.atan2(dx, dy)
+ 
+    # Convert Euler Yaw to Quaternion
+    def Euler_to_Quat(self, theta, pose_msg):
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, theta)
+        pose_msg.pose.orientation.x = quaternion[0]
+        pose_msg.pose.orientation.y = quaternion[1]
+        pose_msg.pose.orientation.z = quaternion[2]
+        pose_msg.pose.orientation.w = quaternion[3]
+
+        return pose_msg.pose.orientation
+        
     def plan_process(self):
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
@@ -92,14 +109,20 @@ class PathPlanning:
         rospy.loginfo("Path planning was started...")
         path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
         # smooth_path = HybridAStar.smooth_path(path)
-        # print(path)
+
         if path is not None:
-            for p in path:
+            for p in range(0, len(path) - 1):
+                # Initialize Current Path and Next Path
+                p1 = path[p]
+                p2 = path[p+1]
+                # Initialize Pose Messages
                 pose_msg = PoseStamped()
                 pose_msg.header.frame_id = path_msg.header.frame_id
                 pose_msg.header.stamp = rospy.Time.now()
-                pose_msg.pose.position.x = p[0]
-                pose_msg.pose.position.y = p[1]
+                # Push Position to Pose Messages
+                pose_msg.pose.position.x = p1[0]
+                pose_msg.pose.position.y = p1[1]
+                pose_msg.pose.orientation = self.Euler_to_Quat(self.angle(p1, p2), pose_msg)
                 path_msg.poses.append(pose_msg)
 
         self.path_pub.publish(path_msg)
