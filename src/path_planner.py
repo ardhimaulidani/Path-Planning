@@ -19,7 +19,7 @@ class PathPlanning:
         self.goal_pose = None
         self.prev_crash_status = False
 
-        self.robot = RobotDimension(0.7, 0.7)
+        self.robot = RobotDimension(0.9, 0.9)
 
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
@@ -77,19 +77,19 @@ class PathPlanning:
         if not self.is_working:
             self.is_working = True
             self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
-            if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
-                rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
-            #     if self.ready_to_plan():
-            #         self.plan_process()
-            else:
-                self.start_pose = None
-                rospy.logwarn("New start is bad or no map is available")
+            # if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
+            #     rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
+            # #     if self.ready_to_plan():
+            # #         self.plan_process()
+            # else:
+            #     self.start_pose = None
+            #     rospy.logwarn("New start is bad or no map is available")
             self.is_working = False
 
     def angle(self, current_pose, next_pose):
         dy = next_pose[1] - current_pose[1]
         dx = next_pose[0] - current_pose[0]
-        return math.atan2(dx, dy)
+        return math.atan2(dy, dx)
  
     # Convert Euler Yaw to Quaternion
     def Euler_to_Quat(self, theta, pose_msg):
@@ -124,6 +124,7 @@ class PathPlanning:
                 pose_msg.pose.position.y = p1[1]
                 pose_msg.pose.orientation = self.Euler_to_Quat(self.angle(p1, p2), pose_msg)
                 path_msg.poses.append(pose_msg)
+                # print(p1[0], p1[1], self.angle(p1, p2))
 
         self.path_pub.publish(path_msg)
         rospy.loginfo("Path published successfully")
