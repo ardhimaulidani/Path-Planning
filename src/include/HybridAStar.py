@@ -68,8 +68,6 @@ class HybridAStar():
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
-            # print(current_node.g, current_node.h)
-            # print(current_node.position[0], current_node.position[1])
 
             for new_position in neighbors: # Adjacent squares
                 # Get node position
@@ -85,7 +83,7 @@ class HybridAStar():
                     successor = Node(node_position, current_node)
                     
                     # Check if successor is same as goal pose
-                    if successor.dist_to(goal_node) <= min(robot.width/(2*map.resolution), robot.height/(2*map.resolution)):
+                    if successor.dist_to(goal_node) <= 0.15:
                         path_found = successor
                         break
                     
@@ -140,7 +138,7 @@ class HybridAStar():
     @staticmethod
     def smooth_path(path):
         smoothed_path = [path[0]]
-        for i in range(1, len(path) - 1):
+        for i in range(1, len(path) - 2):
             p1 = path[i-1]
             p2 = path[i]
             p3 = path[i+1]
@@ -152,6 +150,8 @@ class HybridAStar():
                 new_point = (p2[0] + distance * math.cos(new_angle), p2[1] + distance * math.sin(new_angle))
                 smoothed_path.append(new_point)
         smoothed_path.append(path[-1])
+        
+
         return smoothed_path
     
 if __name__ == '__main__':

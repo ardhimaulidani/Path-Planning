@@ -14,10 +14,11 @@ from include.HybridAStar import HybridAStar
 
 class PathPlanning:
     def __init__(self):
-        self.map = None
-        self.start_pose = None
-        self.goal_pose = None
-        self.prev_crash_status = False
+        self.map                = None
+        self.start_pose         = None
+        self.goal_pose          = None
+        self.goal_orientation   = None
+        self.prev_crash_status  = False
 
         self.robot = RobotDimension(0.9, 0.9)
 
@@ -65,6 +66,7 @@ class PathPlanning:
             self.is_working = True
             self.goal_pose = self.map.m_to_cell_coordinate(goal_pose.pose.position.x, goal_pose.pose.position.y)
             if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot):
+                self.goal_orientation = goal_pose.pose.orientation
                 rospy.loginfo("New goal pose was set: ({}, {})".format(goal_pose.pose.position.x, goal_pose.pose.position.y))
                 if self.ready_to_plan():
                     self.plan_process()
@@ -115,16 +117,29 @@ class PathPlanning:
                 # Initialize Current Path and Next Path
                 p1 = path[p]
                 p2 = path[p+1]
+
                 # Initialize Pose Messages
                 pose_msg = PoseStamped()
                 pose_msg.header.frame_id = path_msg.header.frame_id
                 pose_msg.header.stamp = rospy.Time.now()
+
                 # Push Position to Pose Messages
                 pose_msg.pose.position.x = p1[0]
                 pose_msg.pose.position.y = p1[1]
                 pose_msg.pose.orientation = self.Euler_to_Quat(self.angle(p1, p2), pose_msg)
                 path_msg.poses.append(pose_msg)
-                # print(p1[0], p1[1], self.angle(p1, p2))
+
+            # Initialize Pose Messages
+            pose_msg = PoseStamped()
+            pose_msg.header.frame_id = path_msg.header.frame_id
+            pose_msg.header.stamp = rospy.Time.now()
+
+            # Push Last Target Position to Pose Messages
+            last_pose = path[len(path) - 1]
+            pose_msg.pose.position.x = last_pose[0]
+            pose_msg.pose.position.y = last_pose[1]
+            pose_msg.pose.orientation = self.goal_orientation
+            path_msg.poses.append(pose_msg)
 
         self.path_pub.publish(path_msg)
         rospy.loginfo("Path published successfully")
