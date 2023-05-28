@@ -20,7 +20,7 @@ class PathPlanning:
         self.goal_orientation   = None
         self.prev_crash_status  = False
 
-        self.robot = RobotDimension(0.9, 0.9)
+        self.robot = RobotDimension(0.6, 0.5)
 
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
@@ -65,7 +65,7 @@ class PathPlanning:
         if not self.is_working:
             self.is_working = True
             self.goal_pose = self.map.m_to_cell_coordinate(goal_pose.pose.position.x, goal_pose.pose.position.y)
-            if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot):
+            if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot.diameter):
                 self.goal_orientation = goal_pose.pose.orientation
                 rospy.loginfo("New goal pose was set: ({}, {})".format(goal_pose.pose.position.x, goal_pose.pose.position.y))
                 if self.ready_to_plan():
@@ -109,7 +109,7 @@ class PathPlanning:
         path_msg.header.frame_id = self.map.frame_id
 
         rospy.loginfo("Path planning was started...")
-        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot)
+        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot.path_inflation)
         # smooth_path = HybridAStar.smooth_path(path)
 
         if path is not None:

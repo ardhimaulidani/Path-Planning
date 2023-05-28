@@ -49,8 +49,7 @@ class Map:
     # Check meter coordinate including robot size is inside map boundaries
     def is_allowed(self, i, j, robot):
         was_error = False
-        # i, j = self.m_to_cell_coordinate(x, y)
-        side = int(math.floor((max(robot.width, robot.height) / self.resolution)/2))
+        side = int(math.floor((robot/self.resolution)/2))
         try:
             for s_i in range(i-side, i+side):
                 for s_j in range(j-side, j+side):
