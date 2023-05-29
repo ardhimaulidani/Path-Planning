@@ -78,7 +78,8 @@ class PathPlanning:
     def start_callback(self, start_pose):
         if not self.is_working:
             self.is_working = True
-            self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
+            if self.map is not None:
+                self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
             # if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
             #     rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
             # #     if self.ready_to_plan():
