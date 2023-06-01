@@ -81,13 +81,6 @@ class PathPlanning:
             self.is_working = True
             if self.map is not None:
                 self.start_pose = self.map.m_to_cell_coordinate(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y)
-            # if self.map is not None and self.map.is_allowed(self.start_pose[0], self.start_pose[1], self.robot):
-            #     rospy.loginfo("New start pose was set: ({}, {})".format(start_pose.pose.pose.position.x, start_pose.pose.pose.position.y))
-            # #     if self.ready_to_plan():
-            # #         self.plan_process()
-            # else:
-            #     self.start_pose = None
-            #     rospy.logwarn("New start is bad or no map is available")
             self.is_working = False
 
     def angle(self, current_pose, next_pose):
@@ -106,6 +99,7 @@ class PathPlanning:
         return pose_msg.pose.orientation
         
     def plan_process(self):
+        path_length = 0.0;
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
         path_msg.header.frame_id = self.map.frame_id
@@ -119,6 +113,8 @@ class PathPlanning:
                 # Initialize Current Path and Next Path
                 p1 = path[p]
                 p2 = path[p+1]
+
+                path_length += (abs(p2[0] - p1[0])**2 + abs(p2[1] - p1[1])**2)**0.5
 
                 # Initialize Pose Messages
                 pose_msg = PoseStamped()
@@ -137,13 +133,18 @@ class PathPlanning:
             pose_msg.header.stamp = rospy.Time.now()
 
             # Push Last Target Position to Pose Messages
+            second_last_pose = path[len(path) - 2]
             last_pose = path[len(path) - 1]
             pose_msg.pose.position.x = last_pose[0]
             pose_msg.pose.position.y = last_pose[1]
             pose_msg.pose.orientation = self.goal_orientation
             path_msg.poses.append(pose_msg)
 
+            # Add Path Length
+            path_length += (abs(last_pose[0] - second_last_pose[0])**2 + abs(last_pose[1] - second_last_pose[1])**2)**0.5
+
         self.path_pub.publish(path_msg)
+        print("Path Length : ", format(path_length), " m")
         rospy.loginfo("Path published successfully")
 
 if __name__ == '__main__':
