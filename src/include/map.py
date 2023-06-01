@@ -54,7 +54,7 @@ class Map:
             for s_i in range(i-side, i+side):
                 for s_j in range(j-side, j+side):
                     cell = self.get_by_index(s_i, s_j)
-                    if cell == 100 or cell == -1:
+                    if cell == 100 or cell == -1 or cell >=253:
                         return False
         except IndexError:
             # rospy.loginfo("Coordinate are out of range")
