@@ -20,11 +20,12 @@ class PathPlanning:
         self.goal_orientation   = None
         self.prev_crash_status  = False
 
-        self.robot = RobotDimension(0.6, 0.5)
+        self.robot = RobotDimension(0.8, 0.5)
 
         self.is_working = False
         self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
 
+        # rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
         rospy.Subscriber("/crashed", Bool, self.crashed_callback)
