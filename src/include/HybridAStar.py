@@ -5,7 +5,7 @@
 
 import math
 import heapq
-import time
+
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -61,7 +61,7 @@ class HybridAStar():
         open_list = []
         closed_list = set()
         path_found = None
-        start_time = time.time()
+        
         # Add start node to open list
         heapq.heappush(open_list, (0.0, start_node))
 
@@ -83,7 +83,7 @@ class HybridAStar():
                     successor = Node(node_position, current_node)
                     
                     # Check if successor is same as goal pose
-                    if successor.dist_to(goal_node) <= 0.15:
+                    if successor.dist_to(goal_node) <= 0.05:
                         path_found = successor
                         break
                     
@@ -107,9 +107,6 @@ class HybridAStar():
                     heapq.heappush(open_list, (successor.f, successor))
 
             closed_list.add(current_node)
-        
-        end_time = time.time()
-        print("--- %s seconds ---" % (end_time - start_time))
 
         # Found the goal
         if path_found is None:
