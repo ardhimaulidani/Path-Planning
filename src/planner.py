@@ -3,11 +3,12 @@ import tf
 import rospy
 import cProfile
 import math
+import time
 
 from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-
+from path_planner.msg import PathInfo
 from include.map import Map
 from include.robot_dimension import RobotDimension
 from include.HybridAStar import HybridAStar
@@ -20,30 +21,29 @@ class PathPlanning:
         self.goal_orientation   = None
         self.prev_crash_status  = False
 
-        self.robot = RobotDimension(0.8, 0.5)
+        self.robot = RobotDimension(0.8, 0.6)
 
         self.is_working = False
-        self.path_pub = rospy.Publisher("/path", Path, queue_size=1)
-
-        # rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
+        self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
+        self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
+        # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
-        rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
     def ready_to_plan(self):
         return self.map is not None and self.start_pose is not None and self.goal_pose is not None
 
-    def crashed_callback(self, crashed_status):
-        if not self.is_working:
-            self.is_working = True        
-            self.crashed_status = crashed_status.data
-            if self.prev_crash_status == 0 and self.crashed_status == 1:
-                if self.ready_to_plan():
-                    rospy.loginfo("Updating plan...")    
-                    self.plan_process()
-            self.prev_crash_status = self.crashed_status
-            self.is_working = False
+    # def crashed_callback(self, crashed_status):
+    #     if not self.is_working:
+    #         self.is_working = True        
+    #         self.crashed_status = crashed_status.data
+    #         if self.prev_crash_status == 0 and self.crashed_status == 1:
+    #             if self.ready_to_plan():
+    #                 rospy.loginfo("Updating plan...")    
+    #                 self.plan_process()
+    #         self.prev_crash_status = self.crashed_status
+    #         self.is_working = False
 
 
     def map_callback(self, grid_map):
@@ -99,13 +99,18 @@ class PathPlanning:
         return pose_msg.pose.orientation
         
     def plan_process(self):
-        path_length = 0.0;
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
         path_msg.header.frame_id = self.map.frame_id
 
+        path_length = 0.0
+        pathinfo_msg = PathInfo()
+
         rospy.loginfo("Path planning was started...")
+        start_time = time.time()
         path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot.path_inflation)
+        pathinfo_msg.duration = time.time() - start_time
+        print("--- %s seconds ---" % (pathinfo_msg.duration))
         # smooth_path = HybridAStar.smooth_path(path)
 
         if path is not None:
@@ -142,7 +147,9 @@ class PathPlanning:
 
             # Add Path Length
             path_length += (abs(last_pose[0] - second_last_pose[0])**2 + abs(last_pose[1] - second_last_pose[1])**2)**0.5
+            pathinfo_msg.length = path_length
 
+        self.pathinfo_pub.publish(pathinfo_msg)
         self.path_pub.publish(path_msg)
         print("Path Length : ", format(path_length), " m")
         rospy.loginfo("Path published successfully")
