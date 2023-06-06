@@ -26,10 +26,9 @@ class PathPlanning:
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
-
+        # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
-        # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
     def ready_to_plan(self):
