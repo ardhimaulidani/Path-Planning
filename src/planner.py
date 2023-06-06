@@ -21,33 +21,30 @@ class PathPlanning:
         self.goal_orientation   = None
         self.prev_crash_status  = False
 
-        # self.robot = RobotDimension(0.8, 0.5)
-        self.robot = RobotDimension(1.00, 0.5)
-
+        self.robot = RobotDimension(0.8, 0.6)
 
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
 
-        # rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
-        rospy.Subscriber("/crashed", Bool, self.crashed_callback)
+        # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
     def ready_to_plan(self):
         return self.map is not None and self.start_pose is not None and self.goal_pose is not None
 
-    def crashed_callback(self, crashed_status):
-        if not self.is_working:
-            self.is_working = True        
-            self.crashed_status = crashed_status.data
-            if self.prev_crash_status == 0 and self.crashed_status == 1:
-                if self.ready_to_plan():
-                    rospy.loginfo("Updating plan...")    
-                    self.plan_process()
-            self.prev_crash_status = self.crashed_status
-            self.is_working = False
+    # def crashed_callback(self, crashed_status):
+    #     if not self.is_working:
+    #         self.is_working = True        
+    #         self.crashed_status = crashed_status.data
+    #         if self.prev_crash_status == 0 and self.crashed_status == 1:
+    #             if self.ready_to_plan():
+    #                 rospy.loginfo("Updating plan...")    
+    #                 self.plan_process()
+    #         self.prev_crash_status = self.crashed_status
+    #         self.is_working = False
 
 
     def map_callback(self, grid_map):
