@@ -21,13 +21,13 @@ class PathPlanning:
         self.goal_orientation   = None
         self.prev_crash_status  = False
 
-        self.robot = RobotDimension(0.8, 0.6)
+        self.robot = RobotDimension(0.8, 0.4)
 
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
         # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
-        rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
+        rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
@@ -50,16 +50,7 @@ class PathPlanning:
         if not self.is_working:
             self.is_working = True
             self.map = Map(grid_map)
-            rospy.loginfo("New map was updated")
-
-            # Uncomment for impoving code execution time only!!!!
-            # self.start_pose = self.map.m_to_cell_coordinate(2.0221657752990723, 1.984541416168213)
-            # self.goal_pose = self.map.m_to_cell_coordinate(-0.9461665153503418, -0.04367697238922119)
-        
-            # if self.ready_to_plan(): 
-            #     self.plan_process()
-                # cProfile.runctx('self.plan_process()', globals(), locals()) 
-                
+            rospy.loginfo("New map was updated")               
             self.is_working = False
 
     def goal_callback(self, goal_pose):

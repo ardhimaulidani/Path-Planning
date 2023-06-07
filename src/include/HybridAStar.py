@@ -18,6 +18,7 @@ class Node():
             self.g = self.h = self.f = 0
             self.last_dir_x = self.last_dir_y = 0
             self.turn_cost = 0
+            self.obstacle_cost = 0
 
     def __eq__(self, other):
         return self.position == other.position
@@ -87,7 +88,16 @@ class HybridAStar():
                     successor.last_dir_x = new_position[0]
                     successor.last_dir_y = new_position[1]
                     successor.turn_cost = current_node.turn_cost
-                    
+
+                    # Check Obstacle Cost
+                    costmap = map.check_data(successor.position[0], successor.position[1])
+                    if (costmap == 99):
+                        successor.obstacle_cost = 2
+                    elif (costmap == 88):
+                        successor.obstacle_cost = 1
+                    elif (costmap == 0):
+                        successor.obstacle_cost = 0
+
                     # Check if successor is same as goal pose
                     if successor.dist_to(goal_node) <= 0.05:
                         path_found = successor
@@ -101,7 +111,7 @@ class HybridAStar():
 
                     # Create the f, g, and h values
                     successor.g = current_node.g + current_node.dist_to(successor)
-                    successor.h = successor.heuristic(goal_node)
+                    successor.h = successor.heuristic(goal_node) + successor.obstacle_cost
                     successor.f = successor.g + successor.h + (successor.turn_cost * turn_cost_factor)
 
                     # for other_successor in closed_list:

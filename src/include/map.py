@@ -46,6 +46,15 @@ class Map:
         x = float(j * self.resolution + self.origin.x)
         return (x, y)
     
+    def check_data(self, i, j):
+        was_error = False
+        try:
+            cell = self.get_by_index(i, j)
+        except IndexError:
+            # rospy.loginfo("Coordinate are out of range")
+            was_error = True
+        return cell         
+       
     # Check meter coordinate including robot size is inside map boundaries
     def is_allowed(self, i, j, robot):
         was_error = False
@@ -54,7 +63,7 @@ class Map:
             for s_i in range(i-side, i+side):
                 for s_j in range(j-side, j+side):
                     cell = self.get_by_index(s_i, s_j)
-                    if cell == 100 or cell == -1 or cell >=253:
+                    if cell == 100 or cell == -1:
                         return False
         except IndexError:
             # rospy.loginfo("Coordinate are out of range")
