@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/map_amcl.yaml"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/katk_02_06_2023.yaml"/>
     <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/rviz/planner.rviz"/> 
     <node name="astar_node" pkg="path_planner" type="planner.py" output="screen"/>
 </launch>

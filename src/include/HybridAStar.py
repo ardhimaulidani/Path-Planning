@@ -48,7 +48,7 @@ class HybridAStar():
         pass         
 
     @staticmethod
-    def replan(map, start, goal, robot):
+    def replan(map, start, goal, turn_cost_factor, robot):
         # Declare node neighbours
         neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0),
                     (1, 1), (-1, -1), (1, -1), (-1, 1)]
@@ -72,7 +72,7 @@ class HybridAStar():
         while open_list and path_found is None:
             # Get current node from open list and switch to closed list
             current_node = heapq.heappop(open_list)[1]
-            print(current_node.turn_cost)
+
             for new_position in neighbors: # Adjacent squares
                 # Get node position
                 node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
@@ -86,27 +86,28 @@ class HybridAStar():
                     successor = Node(node_position, current_node)
                     successor.last_dir_x = new_position[0]
                     successor.last_dir_y = new_position[1]
-
+                    successor.turn_cost = current_node.turn_cost
+                    
                     # Check if successor is same as goal pose
                     if successor.dist_to(goal_node) <= 0.05:
                         path_found = successor
                         break
                     
-                    # for other_successor in closed_list:
-                    check_close_list = successor in closed_list
-                    if check_close_list:
-                        continue       
-                    
                     # Add Turn Cost for every turn made
-                    if (successor.last_dir_x != current_node.last_dir_x) and (successor.last_dir_y != current_node.last_dir_y):
-                        successor.turn_cost = current_node.turn_cost + 1
+                    if (successor.last_dir_x == current_node.last_dir_x) and (successor.last_dir_y == current_node.last_dir_y):
+                        pass
                     else:
-                        successor.turn_cost = current_node.turn_cost
+                        successor.turn_cost += 1
 
                     # Create the f, g, and h values
                     successor.g = current_node.g + current_node.dist_to(successor)
                     successor.h = successor.heuristic(goal_node)
-                    successor.f = successor.g + successor.h + successor.turn_cost * 1
+                    successor.f = successor.g + successor.h + (successor.turn_cost * turn_cost_factor)
+
+                    # for other_successor in closed_list:
+                    check_close_list = successor in closed_list
+                    if check_close_list:
+                        continue       
 
                     # Check if another successor is already in the open list
                     check_open_list = any(True for other_successor_f, other_successor in open_list if (other_successor == successor and other_successor.g <= successor.g))

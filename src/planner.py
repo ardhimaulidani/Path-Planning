@@ -108,7 +108,7 @@ class PathPlanning:
 
         rospy.loginfo("Path planning was started...")
         start_time = time.time()
-        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.robot.path_inflation)
+        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, 1, self.robot.path_inflation)
         pathinfo_msg.duration = time.time() - start_time
         print("--- %s seconds ---" % (pathinfo_msg.duration))
         # smooth_path = HybridAStar.smooth_path(path)
