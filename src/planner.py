@@ -20,14 +20,16 @@ class PathPlanning:
         self.goal_pose          = None
         self.goal_orientation   = None
         self.prev_crash_status  = False
-
+        self.turn_factor        = 0.5
+        self.obstacle_factor    = 0.0
         self.robot = RobotDimension(0.8, 0.4)
 
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
         # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
-        rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
+        # rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
+        rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
         rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
 
@@ -99,7 +101,7 @@ class PathPlanning:
 
         rospy.loginfo("Path planning was started...")
         start_time = time.time()
-        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, 1, self.robot.path_inflation)
+        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.turn_factor, self.obstacle_factor, self.robot.path_inflation)
         pathinfo_msg.duration = time.time() - start_time
         print("--- %s seconds ---" % (pathinfo_msg.duration))
         # smooth_path = HybridAStar.smooth_path(path)
