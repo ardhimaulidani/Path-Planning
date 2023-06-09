@@ -49,7 +49,7 @@ class HybridAStar():
         pass         
 
     @staticmethod
-    def replan(map, start, goal, turn_cost_factor, robot):
+    def replan(map, start, goal, turn_cost_factor, obstacle_factor, robot):
         # Declare node neighbours
         neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0),
                     (1, 1), (-1, -1), (1, -1), (-1, 1)]
@@ -93,7 +93,7 @@ class HybridAStar():
                     costmap = map.check_data(successor.position[0], successor.position[1])
                     if (costmap == 99):
                         successor.obstacle_cost = 2
-                    elif (costmap == 88):
+                    elif (costmap <= 88 and costmap > 0):
                         successor.obstacle_cost = 1
                     elif (costmap == 0):
                         successor.obstacle_cost = 0
@@ -111,8 +111,8 @@ class HybridAStar():
 
                     # Create the f, g, and h values
                     successor.g = current_node.g + current_node.dist_to(successor)
-                    successor.h = successor.heuristic(goal_node) + successor.obstacle_cost
-                    successor.f = successor.g + successor.h + (successor.turn_cost * turn_cost_factor)
+                    successor.h = successor.heuristic(goal_node)
+                    successor.f = successor.g + successor.h + (successor.turn_cost * turn_cost_factor) + (successor.obstacle_cost * obstacle_factor)
 
                     # for other_successor in closed_list:
                     check_close_list = successor in closed_list
