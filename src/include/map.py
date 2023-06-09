@@ -54,7 +54,7 @@ class Map:
             # rospy.loginfo("Coordinate are out of range")
             was_error = True
         return cell         
-       
+
     # Check meter coordinate including robot size is inside map boundaries
     def is_allowed(self, i, j, robot):
         was_error = False
