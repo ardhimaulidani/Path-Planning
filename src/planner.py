@@ -8,10 +8,13 @@ import time
 from std_msgs.msg import Bool
 from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from visualization_msgs.msg import Marker
+
 from path_planner.msg import PathInfo
 from include.map import Map
 from include.robot_dimension import RobotDimension
 from include.HybridAStar import HybridAStar
+from include.RRT import RRT
 
 class PathPlanning:
     def __init__(self):
@@ -27,6 +30,8 @@ class PathPlanning:
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
+        self.marker_pub = rospy.Publisher('rrt_tree_markers', Marker, queue_size=10)
+
         # rospy.Subscriber("/crashed", Bool, self.crashed_callback)
         # rospy.Subscriber("/costmap_node/costmap/costmap", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
@@ -59,6 +64,7 @@ class PathPlanning:
         if not self.is_working:
             self.is_working = True
             self.goal_pose = self.map.m_to_cell_coordinate(goal_pose.pose.position.x, goal_pose.pose.position.y)
+
             if self.map is not None and self.map.is_allowed(self.goal_pose[0], self.goal_pose[1], self.robot.diameter):
                 self.goal_orientation = goal_pose.pose.orientation
                 rospy.loginfo("New goal pose was set: ({}, {})".format(goal_pose.pose.position.x, goal_pose.pose.position.y))
@@ -98,15 +104,21 @@ class PathPlanning:
 
         path_length = 0.0
         pathinfo_msg = PathInfo()
+        
+        rrt = RRT(self.map, self.start_pose, self.goal_pose, 0.25, 0.05, 4000, self.robot)
 
         rospy.loginfo("Path planning was started...")
         start_time = time.time()
-        path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.turn_factor, self.obstacle_factor, self.robot.path_inflation)
+        path = rrt.replan()
+        # path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, 1.0, 1.0, self.robot.path_inflation)
+        # path = HybridAStar.replan(self.map, self.start_pose, self.goal_pose, self.turn_factor, self.obstacle_factor, self.robot.path_inflation)
+
         pathinfo_msg.duration = time.time() - start_time
         print("--- %s seconds ---" % (pathinfo_msg.duration))
         # smooth_path = HybridAStar.smooth_path(path)
 
         if path is not None:
+            marker = rrt.publish_rrt_tree()
             for p in range(0, len(path) - 1):
                 # Initialize Current Path and Next Path
                 p1 = path[p]
@@ -142,6 +154,7 @@ class PathPlanning:
             path_length += (abs(last_pose[0] - second_last_pose[0])**2 + abs(last_pose[1] - second_last_pose[1])**2)**0.5
             pathinfo_msg.length = path_length
 
+        self.marker_pub.publish(marker)
         self.pathinfo_pub.publish(pathinfo_msg)
         self.path_pub.publish(path_msg)
         print("Path Length : ", format(path_length), " m")
