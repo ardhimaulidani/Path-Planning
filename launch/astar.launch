@@ -2,7 +2,15 @@
 <launch>
     <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/katk_02_06_2023.yaml"/>
     <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/rviz/planner.rviz"/> 
-    <node name="astar_node" pkg="path_planner" type="planner.py" output="screen"/>
+
+    <node name="astar_node" pkg="path_planner" type="planner.py" output="screen">
+        <param name="plan_method" type="string" value="AStar" /> <!--  Options : "Djikstra", "AStar", "RRT" -->
+        <param name="use_costmap" type="bool" value="false" />
+        <param name="is_replan" type="bool" value="false" />
+        <param name="turn_cost_factor" type="double" value="10.00" />
+        <param name="obstacle_cost_factor" type="double" value="5.00" />
+    </node>
+
     <node pkg="tf" type="static_transform_publisher" name="base_to_laser_broadcaster_node" args="0 0 0 0 0 0 map base_link 100"/>
     <!-- Run the costmap node -->
     <node name="costmap_node" pkg="costmap_2d" type="costmap_2d_node" >
