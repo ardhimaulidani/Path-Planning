@@ -28,7 +28,7 @@ class PathPlanning:
         self.prev_crash_status  = False
         self.turn_factor        = turn_cost_factor
         self.obstacle_factor    = obstacle_cost_factor
-        self.robot = RobotDimension(0.8, 0.4)
+        self.robot = RobotDimension(rospy.get_param('~robot_diameter', 0.5), rospy.get_param('~size_inflation', 0.1))
 
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
@@ -48,7 +48,7 @@ class PathPlanning:
         else:
             rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/goal", PoseStamped, self.goal_callback)
-        rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.start_callback)
+        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.start_callback)
 
     def ready_to_plan(self):
         return self.map is not None and self.start_pose is not None and self.goal_pose is not None

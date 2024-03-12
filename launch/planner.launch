@@ -4,16 +4,18 @@
     <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/rviz/planner.rviz"/> 
 
     <node name="astar_node" pkg="path_planner" type="planner.py" output="screen">
-        <param name="plan_method" type="string" value="AStar" /> <!--  Options : "Djikstra", "AStar", "RRT" -->
+        <param name="plan_method" type="string" value="RRT" /> <!--  Options : "Djikstra", "AStar", "RRT" -->
         <param name="use_costmap" type="bool" value="false" />
         <param name="is_replan" type="bool" value="false" />
         <param name="turn_cost_factor" type="double" value="10.00" />
         <param name="obstacle_cost_factor" type="double" value="5.00" />
+        <param name="robot_diameter" type="double" value="0.8" />
+        <param name="size_inflation" type="double" value="0.4" />
     </node>
 
     <node pkg="tf" type="static_transform_publisher" name="base_to_laser_broadcaster_node" args="0 0 0 0 0 0 map base_link 100"/>
     <!-- Run the costmap node -->
-    <node name="costmap_node" pkg="costmap_2d" type="costmap_2d_node" >
-        <rosparam file="$(find path_planner)/config/costmap.yaml" command="load" ns="costmap" />
-    </node>
+    <!-- <node name="costmap_node" pkg="costmap_2d" type="costmap_2d_node" >
+        <rosparam file="$(find path_planner)/config/costmap.yaml" command="load" ns="costmap" /> -->
+    <!-- </node> -->
 </launch>
