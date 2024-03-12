@@ -1,25 +1,24 @@
 # Path-Planning
-ROS based Path Planning using A* Algorithm
+ROS based Path Planning using Maze Solver Algorithm. Currently available with 3 different options of solver: 
+- Djikstra
+- A*
+- RRT
 
 ## Dependencies
 - Rospy
 - Heap
 - RViz
+- Map Server
 
 ## Usage
 Generate Waypoint using A* Path Planner
 ```bash
-# Launch Main Controller with RViz
-roslaunch main_controller asr_its
-
 # Run A* Path Planner
-rosrun path_planner astar.py
+rosrun path_planner planner.py
 ```
+
 Generate Waypoint using CSV
 ```bash
-# Launch Main Controller with RViz
-roslaunch main_controller asr_its
-
 # Edit Waypoint in "src/wp.csv"
 rosrun path_planner waypoint.py
 ```
