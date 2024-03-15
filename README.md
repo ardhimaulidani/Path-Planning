@@ -19,13 +19,15 @@ Currently available with 3 different options of solver:
 ## Installation
 ```bash
 # navigate to your workspace directory
-cd catkin_ws/src/
+cd catkin_ws
 
 # clone repo
-git clone https://github.com/ardhimaulidani/Path-Planner.git
+git clone https://github.com/ardhimaulidani/Path-Planner.git src/
+catkin_make
 
 # install dependency
-rosdep install --from-paths Path-Planner/package.xml -y
+rosdep install --from-paths src/Path-Planner/package.xml -y
+source devel/setup.bash
 ```
 
 ## Usage
