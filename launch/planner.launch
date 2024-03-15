@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/katk_02_06_2023.yaml"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find path_planner)/maps/example.yaml"/>
     <node name="trajectory_planner_rviz" pkg="rviz" type="rviz" args="-d $(find path_planner)/rviz/planner.rviz"/> 
 
     <arg name="costmap" default="false" />
@@ -8,8 +8,9 @@
     <node name="astar_node" pkg="path_planner" type="planner.py" output="screen">
         <param name="plan_method" type="string" value="RRT" /> <!--  Options : "Djikstra", "AStar", "RRT" -->
         <param name="turn_cost_factor" type="double" value="10.00" /> <!--  Turning cost factor. Increase for longer path but little turn -->
-        <param name="robot_diameter" type="double" value="0.8" /> <!-- Robot diameter size. (meter units) -->
-        <param name="size_inflation" type="double" value="0.4" /> <!-- Robot size inflation from current diameter. (meter units) -->
+        <param name="iteration" type="int" value="100000" />
+        <param name="robot_diameter" type="double" value="0.5" /> <!-- Robot diameter size. (meter units) -->
+        <param name="size_inflation" type="double" value="0.2" /> <!-- Robot size inflation from current diameter. (meter units) -->
 
         <param name="use_costmap" type="bool" value="$(arg costmap)" /> <!-- Experimental. Trying to use costmap for potential field planner -->
         <param name="is_replan" type="bool" value="false" /> <!-- Experimental. replan when robot is about to crashed -->

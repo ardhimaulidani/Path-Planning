@@ -19,12 +19,6 @@ class Node():
             self.parent = parent
             self.position = position
 
-            # Function Variable for A* Algorithm
-            self.g = self.h = self.f = 0
-            self.last_dir_x = self.last_dir_y = 0
-            self.turn_cost = 0
-            self.obstacle_cost = 0
-
     def __eq__(self, other):
         return self.position == other.position
 
@@ -58,9 +52,10 @@ class RRT():
         
     def generate_random_node(self, goal_sample_rate):
         delta = 0.1/self.map.resolution
+        origin = self.map.origin
         if np.random.random() > goal_sample_rate:
-            return Node((np.random.uniform(160 + delta, 305 - delta), 
-                         np.random.uniform(17 + delta, 255 - delta)))
+            return Node((np.random.uniform(self.map.origin.x + delta, (self.map.width-self.map.origin.x) - delta), 
+                         np.random.uniform(self.map.origin.y + delta, (self.map.height-self.map.origin.y) - delta)))
         return self.goal
 
     @staticmethod
@@ -79,7 +74,6 @@ class RRT():
                          int(node_start.position[1] + dist * math.sin(theta))), node_start)
 
         return node_new
-
 
     def replan(self):
         path_found = None
@@ -107,17 +101,6 @@ class RRT():
         # Found the goal
         if path_found is None:
             print("No path found")
-
-            # nearest_node = self.nearest_neighbor(self.vertex, self.goal)
-            # last_node = Node((int(self.goal.position[0]),
-            #                  int(self.goal.position[1])), nearest_node)
-
-            # path = []
-            # current = last_node
-            # while current is not None:
-            #     path.append(self.map.cell_to_m_coordinate(current.position[0], current.position[1]))
-            #     current = current.parent
-            # return path[::-1] # Return reversed path
         
         else:
             # Restore and publish path

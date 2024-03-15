@@ -29,7 +29,8 @@ class PathPlanning:
         self.turn_factor        = turn_cost_factor
         self.obstacle_factor    = obstacle_cost_factor
         self.robot = RobotDimension(rospy.get_param('~robot_diameter', 0.5), rospy.get_param('~size_inflation', 0.1))
-
+        self.rrt_iteration      = rospy.get_param('~iteration', 15000)
+        
         self.is_working = False
         self.path_pub     = rospy.Publisher("/path", Path, queue_size=1)
         self.pathinfo_pub = rospy.Publisher("/PathInfo", PathInfo, queue_size=1)
@@ -140,7 +141,7 @@ class PathPlanning:
 
         # RRT Path Planning Method
         elif self.method == 2:
-            rrt = RRT(self.map, self.start_pose, self.goal_pose, 0.1, 0.05, 15000, self.robot)
+            rrt = RRT(self.map, self.start_pose, self.goal_pose, 0.1, 0.05, self.rrt_iteration, self.robot)
             path = rrt.replan()
 
         pathinfo_msg.duration = time.time() - start_time
