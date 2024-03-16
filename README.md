@@ -1,4 +1,6 @@
-# Path-Planning
+Path Planner
+==============================
+
 This repository implements ROS1 based Path Planning using some of the maze solver algorithm. 
 Currently available with 3 different options of solver: 
 ### Djikstra Algorithm
